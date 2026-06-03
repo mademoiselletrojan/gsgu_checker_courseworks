@@ -1,0 +1,8 @@
+{
+    "font": "Times New Roman",
+    "sizes": [12, 14],
+    "alignment": "justify",
+    "line_spacing": 1.5,
+    "caption_alignment": "right",
+    "caption_prefixes": ["таблица", "table"]
+}
