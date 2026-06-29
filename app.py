@@ -3,6 +3,17 @@ from docx import Document
 import os
 from datetime import datetime
 
+import base64
+
+
+def get_image_base64(path):
+    with open(path, "rb") as f:
+        return base64.b64encode(f.read()).decode()
+
+# Если логотип Logo.svg лежит, например, в папке static/ рядом с app.py:
+logo_path = os.path.join(os.path.dirname(__file__), "static", "Logo.svg")
+logo_base64 = get_image_base64(logo_path)
+
 from parsers.docx_parser import DocxParser
 from analyzers.structure_checker import StructureChecker
 from utils.profile_loader import ProfileLoader
@@ -42,22 +53,59 @@ def render_error(index, section, font_size, line_spacing, in_table=False):
 
 # Настройка страницы
 st.set_page_config(
-    page_title="Проверка курсовой работы",
+    page_title="Ассистент проверки курсовых работ",
     page_icon="📘",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
 
-# Кастомный CSS
+# ==================== КАСТОМНЫЙ CSS ====================
 st.markdown("""
 <style>
     .main-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 2rem;
+        background: linear-gradient(135deg, #a60216 0%, #d73749 100%);
+        padding: 1.8rem 2rem;
         border-radius: 12px;
         margin-bottom: 2rem;
-        text-align: center;
+        box-shadow: 0 4px 15px rgba(166, 2, 22, 0.3);
     }
+    
+    .header-content {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+    
+    .logo {
+        width: 100px;
+        height: 100px;
+        flex-shrink: 0;
+        border-radius: 10px;
+        padding: 5px;
+        
+    }
+    
+    .header-text h1 {
+        color: white;
+        margin: 0;
+        font-size: 2.1rem;
+        line-height: 1.1;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .header-text p {
+        color: rgba(255,255,255,0.95);
+        margin: 8px 0 0 0;
+        font-size: 1.15rem;
+        font-weight: 500;
+    }
+
+    .main-header:hover {
+        box-shadow: 0 6px 20px rgba(166, 2, 22, 0.4);
+        transform: translateY(-2px);
+        transition: all 0.3s ease;
+    }
+
     .success-badge {
         background: #d4edda;
         color: #155724;
@@ -77,7 +125,6 @@ st.markdown("""
         display: inline-block;
     }
 
-    /* 🔵 Синие кнопки */
     div.stButton > button:first-child {
         background-color: #1E88E5 !important;
         color: white !important;
@@ -93,14 +140,20 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Заголовок
-st.markdown("""
+# ==================== ЗАГОЛОВОК С ЛОГОТИПОМ ====================
+st.markdown(f"""
 <div class="main-header">
-    <h1 style="color: white; margin: 0;">📘 Проверка курсовой работы</h1>
-    <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">Автоматическая проверка</p>
+    <div class="header-content">
+        <img src="data:image/svg+xml;base64,{logo_base64}" class="logo" alt="Логотип ГСГУ">
+        <div class="header-text">
+            <h1>Ассистент проверки курсовых работ</h1>
+            <p>Проверка курсовых работ </p>
+        </div>
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
+# ==================== ОСНОВНОЙ КОД ====================
 uploaded_file = st.file_uploader(
     "📎 Загрузите файл курсовой работы",
     type=["docx"],
