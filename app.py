@@ -1,3 +1,4 @@
+import streamlit.components.v1 as components
 import streamlit as st
 from docx import Document
 import os
@@ -27,29 +28,6 @@ def render_error(index, section, font_size, line_spacing, in_table=False):
     else:
         expected_font = "14 pt"
 
-    st.markdown(f"""
-<div style="padding: 16px; border-left: 5px solid #dc3545; margin-bottom: 16px; background: linear-gradient(135deg, #fff5f5 0%, #ffffff 100%); border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-        <span style="font-size: 24px;">❌</span>
-        <span style="font-size: 17px; font-weight: 700; color: #c62828;">Ошибка #{index:02}</span>
-        <span style="color: #666; font-size: 14px;">в разделе</span>
-        <span style="background: #ffebee; padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: 600; color: #c62828;">{section}</span>
-    </div>
-    <div style="margin-left: 32px;">
-        <div style="margin-bottom: 8px;">
-            <span style="font-size: 14px; color: #555;">📏 Размер шрифта:</span>
-            <span style="font-weight: 600; color: #d32f2f; margin-left: 8px;">{font_size} pt</span>
-            <span style="color: #888; font-size: 13px; margin-left: 8px;">(ожидалось {expected_font})</span>
-        </div>
-        <div>
-            <span style="font-size: 14px; color: #555;">📐 Межстрочный интервал:</span>
-            <span style="font-weight: 600; color: #d32f2f; margin-left: 8px;">{line_spacing}</span>
-            <span style="color: #888; font-size: 13px; margin-left: 8px;">(ожидалось 1.5)</span>
-        </div>
-    </div>
-</div>
-""", unsafe_allow_html=True)
-
 
 # Настройка страницы
 st.set_page_config(
@@ -60,6 +38,41 @@ st.set_page_config(
 )
 
 # ==================== КАСТОМНЫЙ CSS ====================
+st.markdown("""
+<script>
+function translateUploader() {
+    const dropzone = window.parent.document.querySelector('[data-testid="stFileUploaderDropzone"]');
+    if (!dropzone) return;
+
+    const instructions = dropzone.querySelector('[data-testid="stFileUploaderDropzoneInstructions"]');
+    if (instructions) {
+        const spans = instructions.querySelectorAll('span');
+        const smalls = instructions.querySelectorAll('small');
+        spans.forEach(s => {
+            if (s.textContent.trim() === "Drag and drop file here") {
+                s.textContent = "Перетащите файл сюда";
+            }
+        });
+        smalls.forEach(s => {
+            if (s.textContent.includes("Limit") && s.textContent.includes("MB")) {
+                s.textContent = "Лимит 200МБ на файл • DOCX";
+            }
+        });
+    }
+
+    const browseBtn = dropzone.querySelector('section > span, button');
+    if (browseBtn && browseBtn.textContent.trim() === "Browse files") {
+        browseBtn.textContent = "Выбрать файл";
+    }
+}
+
+// запускаем сразу и потом следим за изменениями DOM, т.к. Streamlit может перерисовать виджет
+translateUploader();
+const observer = new MutationObserver(translateUploader);
+observer.observe(window.parent.document.body, { childList: true, subtree: true });
+</script>
+""", unsafe_allow_html=True)
+
 st.markdown("""
 <style>
     .main-header {
@@ -126,17 +139,17 @@ st.markdown("""
     }
 
     div.stButton > button:first-child {
-        background-color: #1E88E5 !important;
-        color: white !important;
-        border-radius: 6px;
-        height: 3rem;
-        font-size: 16px;
-        border: none;
-    }
-    div.stButton > button:hover {
-        background-color: #1565C0 !important;
-        color: white !important;
-    }
+    background: linear-gradient(135deg, #a60216 0%, #d73749 100%) !important;
+    color: white !important;
+    border-radius: 6px;
+    height: 3rem;
+    font-size: 16px;
+    border: none;
+}
+div.stButton > button:hover {
+    background: linear-gradient(135deg, #8a0112 0%, #c12d3c 100%) !important;
+    color: white !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -159,6 +172,54 @@ uploaded_file = st.file_uploader(
     type=["docx"],
     help="Поддерживаются только файлы в формате .docx"
 )
+components.html("""
+<script>
+function translateUploader() {
+    const dropzone = window.parent.document.querySelector('[data-testid="stFileUploaderDropzone"]');
+    if (!dropzone) return;
+
+    const instructions = dropzone.querySelector('[data-testid="stFileUploaderDropzoneInstructions"]');
+    if (instructions) {
+        const spans = instructions.querySelectorAll('span');
+        spans.forEach(s => {
+            const text = s.textContent.trim();
+            if (text === "Drag and drop file here") {
+                s.textContent = "Перетащите файл сюда";
+            }
+            if (text.toLowerCase().includes("limit") && text.includes("MB")) {
+                s.textContent = "Лимит 200МБ на файл • DOCX";
+            }
+        });
+    }
+
+    const browseBtn = dropzone.querySelector('section > span, button');
+    if (browseBtn) {
+        if (browseBtn.textContent.trim() === "Browse files") {
+            browseBtn.textContent = "Выбрать файл";
+        }
+        browseBtn.style.border = "1px solid rgba(250, 250, 250, 0.3)";
+        browseBtn.style.borderRadius = "6px";
+        browseBtn.style.padding = "8px 16px";
+        browseBtn.style.cursor = "pointer";
+    }
+}
+
+// запускаем сразу, затем повторяем каждые 300мс в течение 5 секунд —
+// это перекрывает момент ререндера виджета после загрузки файла
+translateUploader();
+let attempts = 0;
+const interval = setInterval(() => {
+    translateUploader();
+    attempts++;
+    if (attempts > 16) clearInterval(interval);
+}, 300);
+
+// и продолжаем следить за изменениями DOM на случай дальнейших ререндеров
+const observer = new MutationObserver(translateUploader);
+observer.observe(window.parent.document.body, { childList: true, subtree: true });
+</script>
+""", height=0)
+
 
 if uploaded_file is not None:
     temp_path = "temp.docx"
