@@ -50,7 +50,7 @@ function translateUploader() {
         const smalls = instructions.querySelectorAll('small');
         spans.forEach(s => {
             if (s.textContent.trim() === "Drag and drop file here") {
-                s.textContent = "Перетащите файл сюда";
+                s.textContent = "Перенесите файл сюда";
             }
         });
         smalls.forEach(s => {
@@ -184,7 +184,7 @@ function translateUploader() {
         spans.forEach(s => {
             const text = s.textContent.trim();
             if (text === "Drag and drop file here") {
-                s.textContent = "Перетащите файл сюда";
+                s.textContent = "Перенесите файл сюда";
             }
             if (text.toLowerCase().includes("limit") && text.includes("MB")) {
                 s.textContent = "Лимит 200МБ на файл • DOCX";
